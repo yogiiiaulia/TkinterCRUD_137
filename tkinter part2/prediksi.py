@@ -49,14 +49,14 @@ def prediksi_fakultas(bio, fis, eng):
         return "Bahasa"
     return "Tidak Diketahui"
 
-def Update_Data(id_siswa,nama, biologi, fisika, inggris, prediksi):
+def Update_Data(id_siswa, nama, biologi, fisika, inggris, prediksi):
     con = koneksi()
     cur = con.cursor()
     cur.execute("""
         UPDATE nilai_siswa 
         SET nama_siswa=?, biologi=?, fisika=?, inggris=?, prediksi_fakultas=?
         WHERE id=?
-    """, (nama, biologi, fisika, inggris, prediksi))
+    """, (nama, biologi, fisika, inggris, prediksi, id_siswa))
     con.commit()
     con.close()
 
@@ -165,10 +165,10 @@ class AppNilai(tk.Tk):
         if not data:
             return
         
-        nama, bio, fis, ing = data
+        nama,bio, fis, ing = data
         pred = prediksi_fakultas(bio, fis, ing)
 
-        insert_siswa(nama, bio, fis, ing, pred)
+        insert_siswa( nama, bio, fis, ing, pred)
         msg.showinfo("Sukses", "Data berhasil disimpan.")
         
         self.load_data()
@@ -211,8 +211,16 @@ class AppNilai(tk.Tk):
         self.ent_fis.insert(0, item[3])
         self.ent_ing.insert(0, item[4])
 
-       
+        if hasattr(self, "temp_btn"):
+            try:
+                self.temp_btn.destroy()
+            except:
+                pass
+
+        # Buat tombol Save Update yang baru
+        self.temp_btn = tk.Button(self, text="Save Update", command=self.save_update)
         self.temp_btn.pack(pady=5)
+                
 
     def save_update(self):
         data = self.validate()
