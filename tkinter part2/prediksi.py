@@ -49,6 +49,28 @@ def prediksi_fakultas(bio, fis, eng):
         return "Bahasa"
     return "Tidak Diketahui"
 
+def Update_Data(id_siswa,nama, biologi, fisika, inggris, prediksi):
+    con = koneksi()
+    cur = con.cursor()
+    cur.execute("""
+        UPDATE nilai_siswa 
+        SET nama_siswa=?, biologi=?, fisika=?, inggris=?, prediksi_fakultas=?
+        WHERE id=?
+    """, (nama, biologi, fisika, inggris, prediksi))
+    con.commit()
+    con.close()
+
+def Delete_Data(id_siswa):
+    con = koneksi()
+    cur = con.cursor()
+    cur.execute("DELETE FROM nilai_siswa WHERE id=?", (id_siswa,))
+    con.commit()
+    con.close()
+
+
+
+
+
 create_table()
 
 class AppNilai(tk.Tk):
@@ -91,6 +113,9 @@ class AppNilai(tk.Tk):
 
         tk.Button(btns, text="Submit", width=10, command=self.insert_data).pack(side="left", padx=5)
         tk.Button(btns, text="Clear", width=10, command=self.clear_inputs).pack(side="left", padx=5)
+        tk.Button(btns, text="Update", width=10, command=self.Update_Data).pack(side="left", padx=5)
+        tk.Button(btns, text="Delete", width=10, command=self.Delete_Data).pack(side="left", padx=5)
+
 
         frame_table = tk.LabelFrame(main, text="Data Tersimpan")
         frame_table.pack(side="right", fill="both", expand=True)
@@ -127,6 +152,13 @@ class AppNilai(tk.Tk):
         except:
             msg.showerror("Error", "Isi data dengan benar!")
             return None
+        
+    def get_selected_item(self):
+        selected = self.tree.focus()
+        if not selected:
+            msg.showwarning("Peringatan", "Pilih data terlebih dahulu.")
+            return None
+        return self.tree.item(selected)["values"]
 
     def insert_data(self):
         data = self.validate()
@@ -149,6 +181,64 @@ class AppNilai(tk.Tk):
         rows = read_siswa()
         for r in rows:
             self.tree.insert("", tk.END, values=r)
+
+    def Delete_Data(self):
+        item = self.get_selected_item()
+        if not item:
+            return
+
+        id_siswa = item[0]
+
+        if msg.askyesno("Konfirmasi", "Yakin ingin menghapus data ini?"):
+            Delete_Data(id_siswa)
+            msg.showinfo("Sukses", "Data berhasil dihapus.")
+            self.load_data()
+
+    def Update_Data(self):
+        item = self.get_selected_item()
+        if not item:
+            return
+
+        self.selected_id = item[0]
+
+        self.ent_nama.delete(0, tk.END)
+        self.ent_bio.delete(0, tk.END)
+        self.ent_fis.delete(0, tk.END)
+        self.ent_ing.delete(0, tk.END)
+
+        self.ent_nama.insert(0, item[1])
+        self.ent_bio.insert(0, item[2])
+        self.ent_fis.insert(0, item[3])
+        self.ent_ing.insert(0, item[4])
+
+       
+        self.temp_btn.pack(pady=5)
+
+    def save_update(self):
+        data = self.validate()
+        if not data:
+            return
+
+        nama, bio, fis, ing = data
+        pred = prediksi_fakultas(bio, fis, ing)
+
+        Update_Data(self.selected_id, nama, bio, fis, ing, pred)
+        msg.showinfo("Sukses", "Data berhasil diupdate.")
+
+        self.load_data()
+        self.clear_inputs()
+        self.temp_btn.destroy()
+
+    def load_data(self):
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+        rows = read_siswa()
+        for r in rows:
+            self.tree.insert("", tk.END, values=r)
+    
+        
+
 
 if __name__ == "__main__":
     AppNilai().mainloop()
